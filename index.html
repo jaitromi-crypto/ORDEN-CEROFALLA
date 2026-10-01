@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Orden de Trabajo | Cero Falla</title>
+<meta name="app-version" content="6">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -59,6 +60,6 @@
 <button id="newOT">Nueva OT</button><button id="save">Guardar</button><button id="pdf">Informe OT</button><button id="cuentaPdf">Liquidación</button><button id="history">Historial</button>
 </nav>
 
-<dialog id="histDlg"><div class="dlgHead"><h2>Historial</h2><button id="closeHist">✕</button></div><div id="histList"></div></dialog>
+<dialog id="histDlg"><div class="dlgHead"><h2>Historial</h2><button id="closeHist">✕</button></div><p class="hint">El historial guarda los datos de la OT. Las fotografías y firmas permanecen en la OT abierta durante la sesión y en los PDF generados.</p><div id="histList"></div></dialog>
 <script src="app.js"></script>
 </body></html>
