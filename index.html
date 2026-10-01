@@ -36,8 +36,12 @@
 
 <section><div class="sectionTitle"><h2>Cuenta</h2><button class="btn secondary" id="addItem">+ Agregar ítem</button></div>
 <p class="hint">La misma OT se transforma en cuenta final. Agregue repuestos, insumos y mano de obra.</p>
-<div class="tableWrap"><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>Valor unit.</th><th>Total</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
-<div class="totalBox"><span>TOTAL</span><strong id="granTotal">$0</strong></div></section>
+<div class="tableWrap"><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>Valor unitario</th><th>Valor neto</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
+<div class="totals">
+<div><span>Neto total</span><strong id="netoTotal">$0</strong></div>
+<div><span>IVA 19%</span><strong id="ivaTotal">$0</strong></div>
+<div class="grand"><span>TOTAL</span><strong id="granTotal">$0</strong></div>
+</div></section>
 
 <section><h2>Observaciones finales</h2><textarea id="obs" rows="4"></textarea></section>
 </main>
