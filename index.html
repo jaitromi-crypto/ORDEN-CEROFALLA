@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Orden de Trabajo | Cero Falla</title>
-<meta name="app-version" content="8">
+<meta name="app-version" content="10">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -57,10 +57,10 @@
 </main>
 
 <nav>
-<button id="newOT">Nueva OT</button><button id="save">Guardar</button><button id="pdf">Informe OT</button><button id="cuentaPdf">Liquidación</button><button id="enviarDocumento" type="button">Enviar documento</button><button id="history">Historial</button>
+<button id="newOT">Nueva OT</button><button id="abrirCotizacion" type="button" onclick="location.href='cotizacion-v3/'">Cotizaciones</button><button id="save">Guardar</button><button id="pdf">Informe OT</button><button id="cuentaPdf">Liquidación</button><button id="enviarDocumento" type="button">Enviar documento</button><button id="history">Historial</button>
 </nav>
 
 <dialog id="envioDlg"><div class="dlgHead"><h2>Enviar documento</h2><button id="cerrarEnvio" type="button">✕</button></div><p>Selecciona el documento. Luego podrás elegir WhatsApp, correo u otra aplicación compatible.</p><div class="photoBtns"><button class="btn" id="compartirOt" type="button">Orden de Trabajo</button><button class="btn" id="compartirLiquidacion" type="button">Liquidación</button></div></dialog>
 <dialog id="histDlg"><div class="dlgHead"><h2>Historial</h2><button id="closeHist">✕</button></div><p class="hint">Historial compartido entre tus dispositivos. Las OT se sincronizan con Cero Falla OT.</p><div id="histList"></div></dialog>
-<script src="app.js"></script>
+<script src="app.js?v=20261010-cot"></script>
 </body></html>
