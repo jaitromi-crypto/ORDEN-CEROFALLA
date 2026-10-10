@@ -57,9 +57,10 @@
 </main>
 
 <nav>
-<button id="newOT">Nueva OT</button><button id="save">Guardar</button><button id="pdf">Informe OT</button><button id="cuentaPdf">Liquidación</button><button id="compartirOt">Enviar OT</button><button id="compartirLiquidacion">Enviar Liquidación</button><button id="history">Historial</button>
+<button id="newOT">Nueva OT</button><button id="save">Guardar</button><button id="pdf">Informe OT</button><button id="cuentaPdf">Liquidación</button><button id="enviarDocumento" type="button">Enviar documento</button><button id="history">Historial</button>
 </nav>
 
+<dialog id="envioDlg"><div class="dlgHead"><h2>Enviar documento</h2><button id="cerrarEnvio" type="button">✕</button></div><p>Selecciona el documento. Luego podrás elegir WhatsApp, correo u otra aplicación compatible.</p><div class="photoBtns"><button class="btn" id="compartirOt" type="button">Orden de Trabajo</button><button class="btn" id="compartirLiquidacion" type="button">Liquidación</button></div></dialog>
 <dialog id="histDlg"><div class="dlgHead"><h2>Historial</h2><button id="closeHist">✕</button></div><p class="hint">Historial compartido entre tus dispositivos. Las OT se sincronizan con Cero Falla OT.</p><div id="histList"></div></dialog>
 <script src="app.js"></script>
 </body></html>
