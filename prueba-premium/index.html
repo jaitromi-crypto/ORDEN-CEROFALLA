@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PRUEBA | Orden de Trabajo Cero Falla</title>
+<meta name="app-version" content="8">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<header><div class="brand"><b>CERO <span>FALLA</span></b><small>ESPECIALISTA AUTOMOTRIZ</small></div><div id="otBadge">OT-000001</div></header>
+<main><section style="border:2px solid #bd1824;background:#fff2f2;color:#8b1018;padding:12px;border-radius:10px"><strong>🧪 VERSIÓN DE PRUEBA PREMIUM</strong><p>Datos de prueba guardados solo en este dispositivo. Esta página NO se conecta al historial real de órdenes ni a Supabase. No ingresar datos reales de clientes.</p></section>
+<section class="hero"><h1>Orden de Trabajo</h1><div class="topgrid">
+<label>N° OT<input id="ot" readonly></label><label>Fecha<input id="fecha" readonly></label>
+<label>Estado<select id="estado"><option>Recepcionado</option><option>En diagnóstico</option><option>Esperando autorización</option><option>En reparación</option><option>Terminado</option><option>Entregado</option></select></label>
+</div></section>
+
+<section><h2>Cliente</h2><div class="grid">
+<label>Nombre<input id="cliente"></label><label>RUT<input id="rut"></label><label>Teléfono<input id="telefono" inputmode="tel"></label><label>Email<input id="email" type="email"></label>
+</div></section>
+
+<section><h2>Vehículo</h2><div class="grid">
+<label>Marca<input id="marca"></label><label>Modelo<input id="modelo"></label><label>Año<input id="ano" inputmode="numeric"></label><label>Patente<input id="patente"></label>
+<label>VIN<input id="vin"></label><label>Kilometraje<input id="km" inputmode="numeric"></label>
+<label>Nivel de combustible<select id="bencina"><option>Vacío</option><option>1/4</option><option selected>1/2</option><option>3/4</option><option>Lleno</option></select></label>
+</div></section>
+
+<section><h2>Registro fotográfico de recepción</h2><p class="hint">Recomendado: mínimo 6 fotos del estado en que se recibe el vehículo.</p>
+<div class="photoBtns"><label class="btn">📷 Tomar foto<input id="camera" type="file" accept="image/*" capture="environment" hidden></label><label class="btn secondary">🖼️ Galería<input id="gallery" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple hidden></label></div>
+<div id="photos" class="photos"></div><div id="photoCount" class="counter">0 fotos</div></section>
+
+<section><h2>Trabajos solicitados por el cliente</h2><textarea id="solicitados" rows="5" placeholder="Describa lo que el cliente solicita revisar o reparar..."></textarea></section>
+
+<section><h2>Hallazgos / trabajos adicionales</h2><div id="hallazgos"></div><button class="btn secondary" id="addHallazgo">+ Agregar hallazgo</button></section>
+
+<section><h2>Conclusiones</h2><textarea id="conclusiones" rows="5" placeholder="Diagnóstico, resultado del trabajo y recomendaciones..."></textarea></section>
+
+<section><div class="sectionTitle"><h2>Liquidación</h2><button class="btn secondary" id="addItem">+ Agregar ítem</button></div>
+<p class="hint">La misma OT se transforma en liquidación final. Agregue repuestos, insumos y mano de obra.</p>
+<div class="tableWrap"><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>Valor unitario</th><th>Valor neto</th><th></th></tr></thead><tbody id="items"></tbody></table></div>
+<div class="totals">
+<div><span>Neto total</span><strong id="netoTotal">$0</strong></div>
+<div><span>IVA 19%</span><strong id="ivaTotal">$0</strong></div>
+<div class="grand"><span>TOTAL</span><strong id="granTotal">$0</strong></div>
+</div></section>
+
+<section><h2>Aceptación del cliente</h2>
+<p class="acceptText">Declaro haber recibido la información contenida en esta Orden de Trabajo y autorizo los trabajos indicados como aceptados.</p>
+<div class="grid"><label>Nombre de quien acepta<input id="aceptaNombre"></label><label>RUT<input id="aceptaRut"></label></div>
+<label class="acceptCheck"><input id="aceptaCheck" type="checkbox"> Confirmo recepción y aceptación de esta Orden de Trabajo</label>
+<div id="acceptStamp" class="acceptStamp">Pendiente de aceptación</div>
+<label>Firma del cliente</label>
+<canvas id="firma" class="firma" width="700" height="220"></canvas>
+<div class="photoBtns"><button class="btn secondary" id="clearFirma" type="button">Limpiar firma</button><button class="btn" id="confirmAcepta" type="button">Confirmar aceptación</button></div>
+</section>
+<section><h2>Observaciones finales</h2><textarea id="obs" rows="4"></textarea></section>
+</main>
+
+<nav>
+<button id="newOT">Nueva OT</button><button id="save">Guardar</button><button id="pdf">Informe OT</button><button id="cuentaPdf">Liquidación</button><button id="enviarDocumento" type="button">Enviar documento</button><button id="history">Historial</button>
+</nav>
+
+<dialog id="envioDlg"><div class="dlgHead"><h2>Enviar documento</h2><button id="cerrarEnvio" type="button">✕</button></div><p>Selecciona el documento. Luego podrás elegir WhatsApp, correo u otra aplicación compatible.</p><div class="photoBtns"><button class="btn" id="compartirOt" type="button">Orden de Trabajo</button><button class="btn" id="compartirLiquidacion" type="button">Liquidación</button></div></dialog>
+<dialog id="histDlg"><div class="dlgHead"><h2>Historial</h2><button id="closeHist">✕</button></div><p class="hint">Historial compartido entre tus dispositivos. Las OT se sincronizan con Cero Falla OT.</p><div id="histList"></div></dialog>
+<script src="app.js"></script>
+</body></html>
