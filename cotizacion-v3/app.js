@@ -26,7 +26,7 @@ $('#pdf').onclick=()=>{try{pdf().save(current.numero+'.pdf')}catch(e){alert('Err
 $('#enviar').onclick=async()=>{try{const doc=pdf(),file=new File([doc.output('blob')],current.numero+'.pdf',{type:'application/pdf'});if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'Cotización CERO FALLA '+current.numero,text:'Adjunto cotización CERO FALLA.'})}else{doc.save(current.numero+'.pdf');alert('El navegador no admite compartir el PDF directamente. Se descargó el documento.')}}catch(e){if(e.name!=='AbortError')alert('No fue posible compartir: '+e.message)}};
 const prev=Object.values(all()).at(-1);load(prev||fresh());save();
 
-const PUENTE_COT_OT='CF_COT_TO_OT_PREVIEW_V1';
+const PUENTE_COT_OT='CF_COT_TO_OT_OFICIAL_V1';
 $('#crearOT').onclick=()=>{
  save();
  if(current.estado!=='Aprobada'){alert('Para crear la OT primero cambia el estado de la cotización a Aprobada.');return}
@@ -37,7 +37,7 @@ $('#crearOT').onclick=()=>{
   return {tipo:i.tipo,desc:(i.tipo==='Repuesto'?'['+(i.categoria||'Original')+'] ':'')+(i.desc||''),cant:Number(i.cant)||0,unit:Number(i.unit)||0};
  });
  const payload={origen:current.numero,cliente:current.cliente,rut:current.rut,telefono:current.telefono,email:current.email,marca:current.marca,modelo:current.modelo,ano:current.ano,patente:current.patente,vin:current.vin,km:current.km,items:mapped,solicitados:'Trabajos según cotización aprobada '+current.numero+'\\n'+items.filter(i=>i.tipo==='Mano de obra').map(i=>'- '+i.desc).join('\\n'),obs:'Cotización de origen: '+current.numero+' | Total aprobado: '+$('#total').textContent};
- if(!confirm('¿Crear una OT DE PRUEBA desde '+current.numero+'? Se conservará la cotización y no se modificarán las OT oficiales.'))return;
+ if(!confirm('¿Crear una OT OFICIAL desde '+current.numero+'? Se creará una nueva OT oficial y se conservará la cotización original.'))return;
  localStorage.setItem(PUENTE_COT_OT,JSON.stringify(payload));
- window.location.href='../prueba-premium/?origenCot='+encodeURIComponent(current.numero);
+ window.location.href='../?origenCot='+encodeURIComponent(current.numero);
 };
