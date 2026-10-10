@@ -137,3 +137,22 @@ function makeCuentaPdf(){
 $('#pdf').onclick=()=>{try{openPdf(makeOtPdf())}catch(e){console.error(e);alert('No se pudo generar el informe OT. '+e.message)}};
 $('#cuentaPdf').onclick=()=>{try{openPdf(makeCuentaPdf())}catch(e){console.error(e);alert('No se pudo generar la cuenta. '+e.message)}};
 (async()=>{await migrateLegacy();await syncLocalToCloud();const active=localStorage.getItem('CF_OT_ACTIVE');if(active){try{data=await cloudGet(active)||await idbGet(active)}catch(e){console.error(e);try{data=await idbGet(active)}catch(_e){}}}if(!data){let db={};try{db=JSON.parse(localStorage.getItem(DB)||'{}')}catch(e){};if(active&&db[active])data=db[active]}if(!data)data=fresh();fill();if(!active)await save()})();
+
+// Compartir PDF mediante la hoja nativa del dispositivo. No envía datos sin confirmación.
+async function compartirDocumento(tipo){
+ try{
+  const doc=tipo==='ot'?makeOtPdf():makeCuentaPdf();
+  const nombre=(tipo==='ot'?'OT':'Liquidacion')+'_'+String(data.ot||'Cero_Falla').replace(/[^a-zA-Z0-9_-]/g,'_')+'.pdf';
+  const archivo=new File([doc.output('blob')],nombre,{type:'application/pdf'});
+  const asunto=(tipo==='ot'?'Orden de Trabajo':'Liquidación')+' CERO FALLA '+(data.ot||'');
+  if(navigator.canShare&&navigator.canShare({files:[archivo]})&&navigator.share){
+   await navigator.share({files:[archivo],title:asunto,text:'Adjunto documento CERO FALLA para '+(data.cliente||'cliente')+'.'});
+   return;
+  }
+  // En equipos sin soporte de archivos compartidos, descargamos y explicamos el límite.
+  doc.save(nombre);
+  alert('Este navegador no permite adjuntar PDF directamente a WhatsApp o correo. Se descargó '+nombre+' para que puedas adjuntarlo. Prueba Compartir desde Chrome en Android.');
+ }catch(e){if(e.name!=='AbortError'){console.error(e);alert('No fue posible compartir el documento: '+e.message)}}
+}
+$('#compartirOt').onclick=()=>compartirDocumento('ot');
+$('#compartirLiquidacion').onclick=()=>compartirDocumento('liquidacion');
