@@ -136,7 +136,21 @@ function makeCuentaPdf(){
 }
 $('#pdf').onclick=()=>{try{openPdf(makeOtPdf())}catch(e){console.error(e);alert('No se pudo generar el informe OT. '+e.message)}};
 $('#cuentaPdf').onclick=()=>{try{openPdf(makeCuentaPdf())}catch(e){console.error(e);alert('No se pudo generar la cuenta. '+e.message)}};
-(async()=>{await migrateLegacy();await syncLocalToCloud();const active=localStorage.getItem('CF_OT_PREVIEW_ACTIVE');if(active){try{data=await cloudGet(active)||await idbGet(active)}catch(e){console.error(e);try{data=await idbGet(active)}catch(_e){}}}if(!data){let db={};try{db=JSON.parse(localStorage.getItem(DB)||'{}')}catch(e){};if(active&&db[active])data=db[active]}if(!data)data=fresh();fill();if(!active)await save()})();
+(async()=>{await migrateLegacy();await syncLocalToCloud();const active=localStorage.getItem('CF_OT_PREVIEW_ACTIVE');if(active){try{data=await cloudGet(active)||await idbGet(active)}catch(e){console.error(e);try{data=await idbGet(active)}catch(_e){}}}if(!data){let db={};try{db=JSON.parse(localStorage.getItem(DB)||'{}')}catch(e){};if(active&&db[active])data=db[active]}if(!data)data=fresh();fill();if(!active)await save();
+ const key='CF_COT_TO_OT_PREVIEW_V1',raw=localStorage.getItem(key);
+ if(raw){try{
+  const cot=JSON.parse(raw);
+  if(cot.origen&&confirm('Cotización '+cot.origen+' aprobada. ¿Crear una nueva OT de prueba con sus datos y valores?')){
+   await save();
+   const nueva=fresh();
+   for(const k of ['cliente','rut','telefono','email','marca','modelo','ano','patente','vin','km','solicitados','obs'])nueva[k]=String(cot[k]||'');
+   nueva.items=Array.isArray(cot.items)?cot.items.map(it=>({tipo:it.tipo==='Mano de obra'?'Mano de obra':it.tipo==='Insumo'?'Insumo':'Repuesto',desc:String(it.desc||''),cant:Number(it.cant)||0,unit:Number(it.unit)||0})):[];
+   data=nueva;fill();await save();
+   alert('OT DE PRUEBA '+data.ot+' creada desde '+cot.origen+'. Verifica los datos y la liquidación.');
+  }
+ }catch(e){console.error(e);alert('No se pudo importar la cotización de prueba.')}finally{localStorage.removeItem(key)}
+ }
+})();
 
 // Compartir PDF mediante la hoja nativa del dispositivo. No envía datos sin confirmación.
 async function compartirDocumento(tipo){
