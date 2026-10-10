@@ -53,28 +53,110 @@ $('#aceptaNombre').oninput=()=>{data.aceptacion.nombre=$('#aceptaNombre').value;
 $('#aceptaCheck').onchange=()=>{data.aceptacion.aceptado=$('#aceptaCheck').checked;if(!data.aceptacion.aceptado)data.aceptacion.fechaHora='';save();updateAcceptStamp()};
 $('#clearFirma').onclick=()=>{fctx.clearRect(0,0,firma.width,firma.height);data.aceptacion.firma='';save()};
 $('#confirmAcepta').onclick=()=>{data.aceptacion.nombre=$('#aceptaNombre').value.trim();data.aceptacion.rut=$('#aceptaRut').value.trim();if(!data.aceptacion.nombre||!data.aceptacion.rut){alert('Completa nombre y RUT de quien acepta.');return}if(!data.aceptacion.firma){alert('Falta la firma del cliente.');return}$('#aceptaCheck').checked=true;data.aceptacion.aceptado=true;data.aceptacion.fechaHora=new Date().toLocaleString('es-CL');save();updateAcceptStamp();alert('Aceptación registrada en la OT.')};
-function pdfHeader(doc,title){doc.setFillColor(10,10,10);doc.rect(0,0,210,28,'F');doc.setTextColor(255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('CERO FALLA',15,14);doc.setFontSize(9);doc.text('ESPECIALISTA AUTOMOTRIZ',15,21);doc.text(data.ot+'  |  '+data.fecha,145,16);doc.setTextColor(0);doc.setFontSize(16);doc.text(title,15,38)}
+// PDF CERO FALLA Premium: diseño independiente del almacenamiento de órdenes.
+function pdfHeader(doc,title){
+ const pw=doc.internal.pageSize.getWidth();
+ doc.setFillColor(12,13,16);doc.rect(0,0,pw,30,'F');
+ doc.setFillColor(205,24,34);doc.rect(0,30,pw,2,'F');
+ doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(22);doc.text('CERO FALLA',14,14);
+ doc.setFontSize(8);doc.text('ESPECIALISTA AUTOMOTRIZ',14,21);
+ doc.setFontSize(9);doc.text(String(data.ot||''),pw-14,13,{align:'right'});
+ doc.setFont('helvetica','normal');doc.text(String(data.fecha||''),pw-14,20,{align:'right'});
+ doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(title,14,42);
+}
+function pdfFooter(doc){
+ const n=doc.internal.getNumberOfPages();
+ for(let p=1;p<=n;p++){doc.setPage(p);doc.setDrawColor(215);doc.line(14,281,196,281);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(90);
+ doc.text('CERO FALLA  |  +56 9 6925 1525  |  cerofalla.automotriz@gmail.com',14,287);
+ doc.text(p+' / '+n,196,287,{align:'right'});doc.setTextColor(20);}
+}
+function pdfInfo(doc,y){
+ const left=14,w=88,gap=6,right=left+w+gap;
+ const field=(label,value,x,yy,max=79)=>{doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(110);doc.text(label.toUpperCase(),x,yy);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(25);const lines=doc.splitTextToSize(String(value??'-')||'-',max);doc.text(lines.slice(0,2),x,yy+4);};
+ const card=(x,title)=>{doc.setFillColor(246,247,249);doc.roundedRect(x,y,w,46,2,2,'F');doc.setFillColor(190,22,32);doc.rect(x,y,2,46,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(25);doc.text(title,x+6,y+7);};
+ card(left,'CLIENTE');card(right,'VEHÍCULO');
+ field('Nombre',data.cliente,left+6,y+13);field('RUT',data.rut,left+6,y+26,38);field('Teléfono',data.telefono,left+49,y+26,31);field('Email',data.email,left+6,y+38);
+ field('Marca / modelo / año',[data.marca,data.modelo,data.ano].filter(Boolean).join(' '),right+6,y+13);
+ field('Patente',data.patente,right+6,y+26,34);field('Kilometraje',data.km,right+49,y+26,30);
+ field('VIN',data.vin,right+6,y+38);
+ doc.setTextColor(20);return y+53;
+}
+function pdfSection(doc,title,y){
+ doc.setFillColor(24,26,30);doc.roundedRect(14,y,182,9,1,1,'F');doc.setFillColor(210,25,35);doc.rect(14,y,3,9,'F');
+ doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(title,20,y+6);doc.setTextColor(20);return y+14;
+}
+function pdfNewPage(doc){doc.addPage();pdfHeader(doc,doc._cfTitle||'ORDEN DE TRABAJO');return 49;}
+function pdfEnsure(doc,y,height){return y+height>277?pdfNewPage(doc):y;}
+function pdfParagraph(doc,value,y){
+ doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(25);
+ const lines=doc.splitTextToSize(String(value||'Sin detalle.'),180);
+ for(let i=0;i<lines.length;i+=42){const part=lines.slice(i,i+42);y=pdfEnsure(doc,y,part.length*5+3);doc.text(part,15,y);y+=part.length*5+3;}return y+3;
+}
+function pdfPhoto(doc,src,x,y,w=86,h=58){
+ // jsPDF puede leer dimensiones reales desde el archivo, sin estirar la foto.
+ const info=doc.getImageProperties(src),iw=info.width,ih=info.height;
+ if(!iw||!ih)throw Error('Imagen sin dimensiones');
+ const scale=Math.min(w/iw,h/ih),dw=iw*scale,dh=ih*scale;
+ doc.setFillColor(245,245,245);doc.roundedRect(x,y,w,h,1.5,1.5,'F');
+ doc.addImage(src,info.fileType||'JPEG',x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+}
+function pdfPhotos(doc,photos,y){
+ const arr=Array.isArray(photos)?photos:[];
+ for(let i=0;i<arr.length;i+=2){y=pdfEnsure(doc,y,66);
+ for(let j=0;j<2&&i+j<arr.length;j++){try{pdfPhoto(doc,arr[i+j],15+j*94,y);}catch(err){doc.setFontSize(8);doc.text('Fotografía no disponible',17+j*94,y+12);console.warn('Foto PDF',err);}}
+ y+=65;}return y;
+}
 function openPdf(doc){const blob=doc.output('blob'),url=URL.createObjectURL(blob);let w=window.open(url,'_blank');if(!w){const a=document.createElement('a');a.href=url;a.target='_blank';a.click()}setTimeout(()=>URL.revokeObjectURL(url),60000)}
-function makeOtPdf(){save();const {jsPDF}=window.jspdf,doc=new jsPDF(),L=15,W=180;pdfHeader(doc,'ORDEN DE TRABAJO');let y=47;
-const line=(txt,size=10,bold=false)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);let a=doc.splitTextToSize(String(txt||''),W);if(y+a.length*5>282){doc.addPage();y=16}doc.text(a,L,y);y+=a.length*5+2};
-line('Estado: '+data.estado,10,true);line('CLIENTE',12,true);line(`${data.cliente} | RUT: ${data.rut} | Tel: ${data.telefono} | ${data.email}`);line('VEHÍCULO',12,true);line(`${data.marca} ${data.modelo} ${data.ano} | Patente: ${data.patente} | VIN: ${data.vin} | Km: ${data.km} | Combustible: ${data.bencina}`);
-if(data.photos.length){line('FOTOS DE RECEPCIÓN',12,true);for(let i=0;i<data.photos.length;i++){if(y+58>280){doc.addPage();y=16}try{doc.addImage(data.photos[i],'JPEG',15,y,82,55);if(i+1<data.photos.length)doc.addImage(data.photos[++i],'JPEG',105,y,82,55);y+=60}catch(e){}}}
-line('TRABAJOS SOLICITADOS POR EL CLIENTE',12,true);line(data.solicitados||'Sin detalle.');
-if(data.hallazgos.length){line('HALLAZGOS / TRABAJOS ADICIONALES',12,true);data.hallazgos.forEach((h,i)=>{line(`${i+1}. ${h.texto||''} | ${h.informado?'Informado':'No informado'} | ${h.autorizacion}`);for(const src of (h.photos||[])){if(y+58>280){doc.addPage();y=16}try{doc.addImage(src,'JPEG',15,y,82,55);y+=60}catch(e){}}})}
-line('CONCLUSIONES',12,true);line(data.conclusiones||'Sin detalle.');
-if(data.aceptacion?.aceptado){line('ACEPTACIÓN DEL CLIENTE',12,true);line(`Aceptada por: ${data.aceptacion.nombre} | RUT: ${data.aceptacion.rut} | Fecha y hora: ${data.aceptacion.fechaHora}`);line('Declara haber recibido la información de esta Orden de Trabajo y autoriza los trabajos indicados como aceptados.');if(data.aceptacion.firma){if(y+38>280){doc.addPage();y=16}try{doc.addImage(data.aceptacion.firma,'PNG',15,y,70,28);y+=34}catch(e){}}}
-if(data.obs){line('OBSERVACIONES FINALES',12,true);line(data.obs)}return doc}
-function makeCuentaPdf(){save();const {jsPDF}=window.jspdf,doc=new jsPDF(),L=14,R=196;pdfHeader(doc,'LIQUIDACIÓN');let y=49;
-const txt=(s,x,yy,size=11,bold=false,align='left')=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.text(String(s||''),x,yy,{align})};
-const rule=()=>{doc.setDrawColor(190);doc.line(L,y,R,y);y+=5};
-txt('CLIENTE',L,y,12,true);y+=6;txt(data.cliente||'Sin nombre',L,y,11,true);y+=5;txt(`RUT: ${data.rut||'-'}   Tel: ${data.telefono||'-'}   Email: ${data.email||'-'}`,L,y,10);y+=8;
-txt('VEHÍCULO',L,y,12,true);y+=6;txt(`${data.marca||''} ${data.modelo||''} ${data.ano||''}   Patente: ${data.patente||'-'}`,L,y,11,true);y+=5;txt(`VIN: ${data.vin||'-'}   Km: ${data.km||'-'}`,L,y,10);y+=8;rule();
-const x=[L,38,111,130,158,R];txt('TIPO',x[0],y,10,true);txt('DESCRIPCIÓN',x[1],y,10,true);txt('CANT.',x[2],y,10,true,'right');txt('UNITARIO',x[4],y,10,true,'right');txt('NETO',x[5],y,10,true,'right');y+=4;rule();
-let neto=0;
-if(!data.items.length){txt('Sin ítems cargados.',L,y,11);y+=7}
-data.items.forEach(it=>{let t=(+it.cant||0)*(+it.unit||0);neto+=t;if(y>265){doc.addPage();y=20}let desc=doc.splitTextToSize(String(it.desc||''),68),h=Math.max(7,desc.length*5);txt(it.tipo,L,y,10);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(desc,x[1],y);txt(it.cant,x[2],y,10,false,'right');txt(money(it.unit),x[4],y,10,false,'right');txt(money(t),x[5],y,10,true,'right');y+=h;doc.setDrawColor(225);doc.line(L,y-2,R,y-2)});
-y+=5;const iva=Math.round(neto*.19);txt('Neto total',150,y,11,true,'right');txt(money(neto),R,y,11,true,'right');y+=7;txt('IVA 19%',150,y,11,true,'right');txt(money(iva),R,y,11,true,'right');y+=7;doc.setDrawColor(190,20,28);doc.line(130,y-4,R,y-4);txt('TOTAL',150,y,15,true,'right');txt(money(neto+iva),R,y,15,true,'right');
-doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(80);doc.text('Cero Falla · +56 9 6915 2515 · cerofalla.automotriz@gmail.com',105,289,{align:'center'});doc.setTextColor(0);return doc}
+function makeOtPdf(){
+ save();const {jsPDF}=window.jspdf,doc=new jsPDF();doc._cfTitle='ORDEN DE TRABAJO';pdfHeader(doc,doc._cfTitle);
+ let y=pdfInfo(doc,49);y=pdfEnsure(doc,y,19);y=pdfSection(doc,'ESTADO DE LA ORDEN',y);y=pdfParagraph(doc,data.estado,y);
+ if(data.photos?.length){y=pdfEnsure(doc,y,81);y=pdfSection(doc,'REGISTRO FOTOGRÁFICO DE RECEPCIÓN',y);y=pdfPhotos(doc,data.photos,y);}
+ y=pdfEnsure(doc,y,28);y=pdfSection(doc,'TRABAJOS SOLICITADOS POR EL CLIENTE',y);y=pdfParagraph(doc,data.solicitados,y);
+ if(data.hallazgos?.length){for(let i=0;i<data.hallazgos.length;i++){const h=data.hallazgos[i];y=pdfEnsure(doc,y,35);y=pdfSection(doc,'HALLAZGO / TRABAJO ADICIONAL '+(i+1),y);y=pdfParagraph(doc,(h.texto||'Sin detalle')+' | '+(h.informado?'Informado':'No informado')+' | '+(h.autorizacion||''),y);y=pdfPhotos(doc,h.photos,y);}}
+ y=pdfEnsure(doc,y,27);y=pdfSection(doc,'CONCLUSIONES',y);y=pdfParagraph(doc,data.conclusiones,y);
+ if(data.aceptacion?.aceptado){y=pdfEnsure(doc,y,55);y=pdfSection(doc,'ACEPTACIÓN DEL CLIENTE',y);y=pdfParagraph(doc,'Aceptada por: '+data.aceptacion.nombre+' | RUT: '+data.aceptacion.rut+' | Fecha: '+data.aceptacion.fechaHora,y);y=pdfParagraph(doc,'Declara haber recibido la información de esta Orden de Trabajo y autoriza los trabajos indicados como aceptados.',y);if(data.aceptacion.firma){y=pdfEnsure(doc,y,36);try{pdfPhoto(doc,data.aceptacion.firma,15,y,75,29);y+=34}catch(e){console.warn(e)}}}
+ if(data.obs){y=pdfEnsure(doc,y,25);y=pdfSection(doc,'OBSERVACIONES FINALES',y);y=pdfParagraph(doc,data.obs,y);}
+ pdfFooter(doc);return doc;
+}
+function makeCuentaPdf(){
+ save();const {jsPDF}=window.jspdf,doc=new jsPDF(),L=14,R=196;doc._cfTitle='LIQUIDACIÓN';pdfHeader(doc,doc._cfTitle);let y=pdfInfo(doc,49);
+ const txt=(s,x,yy,size=10,bold=false,align='left')=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(25);doc.text(String(s??''),x,yy,{align})};
+ const x=[L,38,111,130,158,R];
+ const headings=()=>{doc.setFillColor(24,26,30);doc.rect(L,y-5,R-L,10,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('TIPO',x[0]+2,y+1);doc.text('DESCRIPCIÓN',x[1],y+1);doc.text('CANT.',x[2],y+1,{align:'right'});doc.text('UNITARIO',x[4],y+1,{align:'right'});doc.text('NETO',x[5]-2,y+1,{align:'right'});doc.setTextColor(25);y+=11;};
+ y+=4;headings();let neto=0;
+ if(!data.items?.length){txt('Sin ítems cargados.',L,y);y+=9;}
+ for(const it of (data.items||[])){const t=(+it.cant||0)*(+it.unit||0);neto+=t;doc.setFontSize(9);const desc=doc.splitTextToSize(String(it.desc||''),68);const h=Math.max(9,desc.length*4.5+4);if(y+h>270){y=pdfNewPage(doc);headings();}
+ txt(it.tipo,L,y,9);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(desc,x[1],y);txt(it.cant,x[2],y,9,false,'right');txt(money(it.unit),x[4],y,9,false,'right');txt(money(t),x[5],y,9,true,'right');y+=h;doc.setDrawColor(225);doc.line(L,y-3,R,y-3);}
+ y=pdfEnsure(doc,y,35);y+=6;const iva=Math.round(neto*.19);
+ txt('Neto total',151,y,10,true,'right');txt(money(neto),R,y,10,true,'right');y+=8;
+ txt('IVA 19%',151,y,10,true,'right');txt(money(iva),R,y,10,true,'right');y+=9;
+ doc.setDrawColor(190,20,28);doc.line(128,y-5,R,y-5);txt('TOTAL',151,y,14,true,'right');txt(money(neto+iva),R,y,14,true,'right');
+ pdfFooter(doc);return doc;
+}
 $('#pdf').onclick=()=>{try{openPdf(makeOtPdf())}catch(e){console.error(e);alert('No se pudo generar el informe OT. '+e.message)}};
 $('#cuentaPdf').onclick=()=>{try{openPdf(makeCuentaPdf())}catch(e){console.error(e);alert('No se pudo generar la cuenta. '+e.message)}};
 (async()=>{await migrateLegacy();await syncLocalToCloud();const active=localStorage.getItem('CF_OT_ACTIVE');if(active){try{data=await cloudGet(active)||await idbGet(active)}catch(e){console.error(e);try{data=await idbGet(active)}catch(_e){}}}if(!data){let db={};try{db=JSON.parse(localStorage.getItem(DB)||'{}')}catch(e){};if(active&&db[active])data=db[active]}if(!data)data=fresh();fill();if(!active)await save()})();
+
+// Compartir PDF mediante la hoja nativa del dispositivo. No envía datos sin confirmación.
+async function compartirDocumento(tipo){
+ $('#envioDlg').close();
+ try{
+  const doc=tipo==='ot'?makeOtPdf():makeCuentaPdf();
+  const nombre=(tipo==='ot'?'OT':'Liquidacion')+'_'+String(data.ot||'Cero_Falla').replace(/[^a-zA-Z0-9_-]/g,'_')+'.pdf';
+  const archivo=new File([doc.output('blob')],nombre,{type:'application/pdf'});
+  const asunto=(tipo==='ot'?'Orden de Trabajo':'Liquidación')+' CERO FALLA '+(data.ot||'');
+  if(navigator.canShare&&navigator.canShare({files:[archivo]})&&navigator.share){
+   await navigator.share({files:[archivo],title:asunto,text:'Adjunto documento CERO FALLA para '+(data.cliente||'cliente')+'.'});
+   return;
+  }
+  // En equipos sin soporte de archivos compartidos, descargamos y explicamos el límite.
+  doc.save(nombre);
+  alert('Este navegador no permite adjuntar PDF directamente a WhatsApp o correo. Se descargó '+nombre+' para que puedas adjuntarlo. Prueba Compartir desde Chrome en Android.');
+ }catch(e){if(e.name!=='AbortError'){console.error(e);alert('No fue posible compartir el documento: '+e.message)}}
+}
+$('#compartirOt').onclick=()=>compartirDocumento('ot');
+$('#compartirLiquidacion').onclick=()=>compartirDocumento('liquidacion');
+
+$('#enviarDocumento').onclick=()=>$('#envioDlg').showModal();
+$('#cerrarEnvio').onclick=()=>$('#envioDlg').close();
