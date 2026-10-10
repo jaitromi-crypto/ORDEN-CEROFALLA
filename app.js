@@ -140,6 +140,7 @@ $('#cuentaPdf').onclick=()=>{try{openPdf(makeCuentaPdf())}catch(e){console.error
 
 // Compartir PDF mediante la hoja nativa del dispositivo. No envía datos sin confirmación.
 async function compartirDocumento(tipo){
+ $('#envioDlg').close();
  try{
   const doc=tipo==='ot'?makeOtPdf():makeCuentaPdf();
   const nombre=(tipo==='ot'?'OT':'Liquidacion')+'_'+String(data.ot||'Cero_Falla').replace(/[^a-zA-Z0-9_-]/g,'_')+'.pdf';
@@ -156,3 +157,6 @@ async function compartirDocumento(tipo){
 }
 $('#compartirOt').onclick=()=>compartirDocumento('ot');
 $('#compartirLiquidacion').onclick=()=>compartirDocumento('liquidacion');
+
+$('#enviarDocumento').onclick=()=>$('#envioDlg').showModal();
+$('#cerrarEnvio').onclick=()=>$('#envioDlg').close();
